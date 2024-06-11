@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Add this script tag within the <head> section of your HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Interpreter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-image:url('https://i.pinimg.com/originals/a9/4a/ee/a94aee835e16cff4f14c83dac8ffbe10.gif');
+            background-size: 100% auto; /* Adjust the percentage as needed */
+            background-repeat: repeat;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        #camera-container {
+            width: 100%;
+            height: 50vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video {
+            width: auto;
+            height: 100%;
+        }
+
+        #output-container {
+            width: 500px;
+            height: 50vh;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #000000;
+            background-image:url('https://img.freepik.com/free-photo/abstract-surface-textures-white-concrete-stone-wall_74190-8184.jpg?size=626&ext=jpg&ga=GA1.1.867424154.1698451200&semt=ais');
+            background-size: 100% auto; /* Adjust the percentage as needed */
+            background-repeat: repeat;
+        }
+
+        #cheat-sheet-button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #close-camera-button {
+            padding: 10px;
+            background-color: #ff4c4c;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+
+        #cheat-sheet-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #cheat-sheet-modal img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+
+        #close-modal-button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="camera-container">
+        <button id="open-camera-button" onclick="openCamera()">Open Camera</button>
+        <button id="close-camera-button" onclick="closeCamera()">Close Camera</button>
+        <video id="video" playsinline></video>
+    </div>
+
+    <button id="capture-frame-button" onclick="captureAndProcessFrame()">Capture and Process Frame</button>
+
+    <div id="output-container">
+        <div id="output-text">Processed Output</div>
+    </div>
+
+    <button id="cheat-sheet-button" onclick="openCheatSheet()">Cheat Sheet</button>
+
+    <div id="cheat-sheet-modal">
+        <button id="close-modal-button" onclick="closeCheatSheet()">Close</button>
+        <img src="https://static.wikia.nocookie.net/the-mr-incredible-becoming-memes/images/4/46/Phase_6_Canny.png/revision/latest?cb=20221202202029">
+    </div>
+
+    <script>
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Connect to the WebSocket
+        socket.on('connect', function () {
+            console.log('Connected to server');
+        });
+
+        // Handle WebSocket responses
+        socket.on('response', function (data) {
+            console.log('Received data:', data);
+
+            if (data.running) {
+                // Display a loading message while test.py is running
+                document.getElementById('output-text').innerText = 'Running test.py...';
+            } else {
+                // Update the output on the webpage with the result
+                document.getElementById('output-text').innerText = data.output;
+            }
+        });
+
+        // Handle disconnect from the WebSocket
+        socket.on('disconnect', function () {
+            console.log('Disconnected from server');
+        });
+
+        let cameraOpened = false;
+
+        async function openCamera() {
+            console.log("Opening camera...");
+            if (!cameraOpened) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                    video.play();
+                    cameraOpened = true;
+
+                } catch (error) {
+                    console.error('Error accessing the camera:', error);
+                }
+            }
+        }
+
+        function closeCamera() {
+            console.log("Closing camera...");
+            const video = document.getElementById('video');
+            if (cameraOpened) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+                cameraOpened = false;
+            }
+        }
+
+        function openCheatSheet() {
+            console.log("Opening cheat sheet...");
+            const cheatSheetModal = document.getElementById("cheat-sheet-modal");
+            cheatSheetModal.style.display = "flex";
+        }
+
+        function closeCheatSheet() {
+            console.log("Closing cheat sheet...");
+            const cheatSheetModal = document.getElementById("cheat-sheet-modal");
+            cheatSheetModal.style.display = "none";
+        }
+
+        // Add this function to send a test request to the Flask server
+        function sendTestRequest() {
+            // Send a test message to the Flask server via WebSocket
+            socket.emit('test_message', { message: 'test_image_data' });
+        }
+
+        function captureAndProcessFrame() {
+            document.getElementById('output-text').innerText = 'Capturing and processing frame...';
+
+            const frameData = captureFrame();
+
+            // Convert the image data to a base64-encoded string
+            const imageData = canvasToBase64(frameData);
+
+            fetch('http://127.0.0.1:5000/process_sign_language', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Result from Flask server:', result);
+                document.getElementById('output-text').innerText = result.output;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('output-text').innerText = 'Error: Unable to communicate with the server.';
+            });
+        }
+
+        function captureFrame() {
+                const video = document.getElementById('video');
+
+                // Create a canvas element
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                // Set the canvas size to match the video size
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Draw the current frame onto the canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Get the canvas data (image data)
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+                return imageData;
+            }
+
+        function canvasToBase64(canvasData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasData.width;
+            canvas.height = canvasData.height;
+            const context = canvas.getContext('2d');
+            context.putImageData(canvasData, 0, 0);
+            return canvas.toDataURL('image/jpeg'); // You can change the format if needed
+        }
+    </script>
+</body>
+</html>

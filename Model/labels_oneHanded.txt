@@ -1,0 +1,11 @@
+0 I feel hot
+1 I need drink
+2 I need food
+3 I need to use the toilet
+4 I'm Fine
+5 I'm sorry
+6 No
+7 Okay
+8 Yes
+9 Hello/Goodbye
+10 What

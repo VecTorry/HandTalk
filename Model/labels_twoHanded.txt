@@ -1,0 +1,10 @@
+0 Call the doctor
+1 I feel cold
+2 I feel sick
+3 I'm out of breath
+4 It hurts
+5 Later
+6 Maybe
+7 Now
+8 Take_care
+9 Thank_you
